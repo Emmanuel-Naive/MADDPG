@@ -3,7 +3,7 @@ import numpy as np
 from maddpg import MADDPG
 from buffer import MultiAgentReplayBuffer
 from make_env import MultiAgentEnv
-from state_chk import CheckState
+from check_state import CheckState
 
 if __name__ == '__main__':
     scenario = '2Ships_Cross'
