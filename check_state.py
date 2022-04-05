@@ -27,6 +27,7 @@ class CheckState:
         self.dis_cloest = min(distance)
     def check_term(self, state, next_state, done_term):
         '''
+        Function for checking destination
         :param state:
         :param next_state:
         :return: reward_term and done_term states
@@ -47,6 +48,12 @@ class CheckState:
         return reward_term, done_term
 
     def check_coll(self, state, next_state):
+        '''
+        Function for checking collision
+        :param state:
+        :param next_state:
+        :return: reward_coll and done_coll states
+        '''
         reward_coll = np.zeros(self.agents_num)
         done_coll = False
         for ship_i in range(self.agents_num):
@@ -78,4 +85,5 @@ if __name__ == '__main__':
 
     done_term = [False] * ships.ships_num
     reward_term, done_term = check_env.check_term(obs, obs_, done_term)
+    reward_coll, done_coll = check_env.check_coll(obs, obs_)
     print(reward_term)

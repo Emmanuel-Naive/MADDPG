@@ -10,6 +10,7 @@ import math
 
 def get_data(scenario_name):
     '''
+    Get data from the saved file (scenario)
     :param scenario_name:
     :return: data in this given scenario, which includes:
         ships_num: number of ships
@@ -63,6 +64,11 @@ class MultiAgentEnv:
         return self.ships_pos
 
     def step(self, actions):
+        '''
+        Function for ships to move
+        :param actions:
+        :return: positions after moving
+        '''
         for ship_idx in range(self.ships_num):
             if not self.ships_done_term[ship_idx]:
                 self.ships_head[ship_idx] += (actions[ship_idx] - self.baseline) * self.angle_limit
