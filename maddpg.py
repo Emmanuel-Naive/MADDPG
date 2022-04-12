@@ -97,22 +97,25 @@ class MADDPG:
         # handle cost function
         for agent_idx, agent in enumerate(self.agents):
             critic_value_ = agent.target_critic.forward(states_, new_actions).flatten()
-            critic_value_[dones[:,0]] = 0.0
+            critic_value_[dones[:, 0]] = 0.0
             # print('critic_value_:',critic_value_.shape,critic_value_)
             critic_value = agent.critic.forward(states, old_actions).flatten()
             # print('critic_value:',critic_value.shape,critic_value)
             # print('rewards[:,agent_idx]',rewards[:,agent_idx].shape,rewards[:,agent_idx])
-            target = rewards[:,agent_idx] + agent.gamma*critic_value_
+            target = rewards[:, agent_idx] + agent.gamma*critic_value_
             # print('target:',target.shape,target)
             critic_loss = F.mse_loss(critic_value, target)
             # print('critic_loss:',critic_loss.shape,critic_loss)
             agent.critic.optimizer.zero_grad()
-            critic_loss = T.tensor(critic_loss.clone(), dtype=T.float, requires_grad=True).to(device)
+            # critic_loss = T.tensor(critic_loss.clone(), dtype=T.float, requires_grad=True).to(device)
+            critic_loss = critic_loss.clone().detach().requires_grad_(True)
+            # print('critic_loss:', critic_loss.shape, critic_loss)
             critic_loss.backward(retain_graph=True)
             agent.critic.optimizer.step()
 
             actor_loss = agent.critic.forward(states, mu).flatten()
             actor_loss = -T.mean(actor_loss)
+            actor_loss = actor_loss.clone().detach().requires_grad_(True)
             agent.actor.optimizer.zero_grad()
             actor_loss.backward(retain_graph=True)
             agent.actor.optimizer.step()
