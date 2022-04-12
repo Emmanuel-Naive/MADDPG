@@ -1,4 +1,4 @@
-# Multi Agents Deep Deterministic Policy Gradient
+# Use Multi Agents Deep Deterministic Policy Gradient Algorithm to Find Collision-free Paths for Ships
 
 ## Known dependencies: 
   Python: 3.9  
