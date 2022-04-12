@@ -1,4 +1,5 @@
 import os
+import torch as T
 from functions import *
 from maddpg import MADDPG
 from buffer import MultiAgentReplayBuffer
@@ -39,6 +40,7 @@ if __name__ == '__main__':
         maddpg_agents.load_checkpoint()
 
     for i in range(N_GAMES):
+        # print(i, T.cuda.get_device_name(0))
         obs = env.reset()
         obs[:, 2] = warp_to_360(obs[:, 2], env.ships_num)
         # print(obs)
@@ -68,7 +70,7 @@ if __name__ == '__main__':
 
             reward_CORLEG = check_env.check_CORLEGs(obs, obs_)
 
-            print(reward_term, reward_coll, reward_CORLEG)
+            # print(reward_term, reward_coll, reward_CORLEG)
             reward = reward_term + reward_coll + reward_CORLEG
 
             if episode_step >= MAX_STEPS:
