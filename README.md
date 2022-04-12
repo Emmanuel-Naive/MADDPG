@@ -1,6 +1,6 @@
-MADDPG
+# Multi Agents Deep Deterministic Policy Gradient
 
-# Known dependencies: 
+## Known dependencies: 
   Python: 3.9  
   CUDA: 11.2  
   
