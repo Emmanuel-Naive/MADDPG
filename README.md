@@ -1,4 +1,4 @@
-# Use Multi Agents Deep Deterministic Policy Gradient Algorithm to Find Collision-free Paths for Ships
+# Use Multi Agents Deep Deterministic Policy Gradient(MADDPG) Algorithm to Find Collision-free Paths for Ships
 
 ## Known dependencies: 
   Python: 3.9  
