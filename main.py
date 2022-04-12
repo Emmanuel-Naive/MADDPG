@@ -1,5 +1,5 @@
 import os
-import numpy as np
+from functions import *
 from maddpg import MADDPG
 from buffer import MultiAgentReplayBuffer
 from make_env import MultiAgentEnv
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     dis_redun = 10
     dis_safe = 15
-    check_env = CheckState(env.ships_num, env.ships_pos, env.ships_term, dis_redun, dis_safe)
+    check_env = CheckState(env.ships_num, env.ships_pos, env.ships_term, env.ships_head, env.ships_speed, dis_redun, dis_safe)
 
     PRINT_INTERVAL = 500
     N_GAMES = 50000
@@ -40,6 +40,9 @@ if __name__ == '__main__':
 
     for i in range(N_GAMES):
         obs = env.reset()
+        obs[:, 2] = warp_to_360(obs[:, 2], env.ships_num)
+        # print(obs)
+        # print(obs[:, 2])
         score = 0
         done_reset = False
         done_goal = [False]*n_agents
@@ -63,13 +66,15 @@ if __name__ == '__main__':
 
             reward_coll, done_coll = check_env.check_coll(obs, obs_)
 
-            # reward_COLREG = check_env.check_COLREG
-            reward = reward_term + reward_coll
-            # reward = reward_term + reward_coll + reward_COLREG
+            reward_CORLEG = check_env.check_CORLEGs(obs, obs_)
+
+            print(reward_term, reward_coll, reward_CORLEG)
+            reward = reward_term + reward_coll + reward_CORLEG
 
             if episode_step >= MAX_STEPS:
                 done_reset = True
-            if all(done_goal):
+            # if all(done_goal):
+            if any(done_goal):
                 done_reset = True
             if done_coll:
                 done_reset = True
