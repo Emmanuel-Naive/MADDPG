@@ -1,14 +1,10 @@
 MADDPG
 
 # Known dependencies: 
-Python: 3.9
-
-CUDA: 11.2
-
-(Python package:)
-
-pytorch: 1.10.2
-
-numpy: 1.21.5
-
-os, math: Python built-in package
+  Python: 3.9
+  CUDA: 11.2
+  
+  (Python package:)
+  pytorch: 1.10.2
+  numpy: 1.21.5
+  os, math: Python built-in package
