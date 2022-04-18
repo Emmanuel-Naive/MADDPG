@@ -7,4 +7,4 @@
   (Python package:)  
   pytorch: 1.10.2  
   numpy: 1.21.5  
-  os, math，random: Python built-in package
+  os, math, random: Python built-in package
