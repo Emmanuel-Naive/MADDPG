@@ -1,5 +1,9 @@
+"""
+Main function
+
+CUDA version: 11.2
+"""
 import os
-import torch as T
 from functions import *
 from maddpg import MADDPG
 from buffer import MultiAgentReplayBuffer
@@ -16,44 +20,53 @@ if __name__ == '__main__':
     # action space
     n_actions = env.ship_action_space
 
-    chkpt_dir = os.path.dirname(os.path.realpath(__file__))
-    maddpg_agents = MADDPG(chkpt_dir, actor_dims, critic_dims, n_agents, n_actions, fc1=64, fc2=64, alpha=0.01,
-                           beta=0.01, scenario=scenario)
+    chkpt_dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedNetwork'
+    maddpg_agents = MADDPG(chkpt_dir, actor_dims, critic_dims, n_agents, n_actions, alpha=0.01, beta=0.01)
 
     max_size = 1000000
-    memory = MultiAgentReplayBuffer(max_size, actor_dims, critic_dims,
-                                    n_agents, n_actions, batch_size=1024)
+    memory = MultiAgentReplayBuffer(max_size, actor_dims, critic_dims, n_agents, n_actions, batch_size=1024)
 
     dis_redun = 10
     dis_safe = 15
-    check_env = CheckState(env.ships_num, env.ships_pos, env.ships_term, env.ships_head, env.ships_speed, dis_redun, dis_safe)
+    check_env = CheckState(env.ships_num, env.ships_pos, env.ships_term, env.ships_head, env.ships_speed,
+                           dis_redun, dis_safe)
 
     PRINT_INTERVAL = 500
     N_GAMES = 50000
-    MAX_STEPS = 1000
-    total_steps = 0
-    score_history = []
-    evaluate = False
-    best_score = 0
+    steps_max = 1000
+    steps_exp = N_GAMES / 2
+    steps_total = 0
 
+    evaluate = False
     if evaluate:
         maddpg_agents.load_checkpoint()
 
-    for i in range(N_GAMES):
-        # print(i, T.cuda.get_device_name(0))
+    score_history = []
+    score_best = 0  # for saving path
+    score_best_avg = 0  # for saving check points
+
+    path_global = []
+    result_dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedResult'
+    for i in range(N_GAMES + 1):
         obs = env.reset()
+        # limits on ships' heading angles
         obs[:, 2] = warp_to_360(obs[:, 2], env.ships_num)
-        # print(obs)
-        # print(obs[:, 2])
-        score = 0
         done_reset = False
         done_goal = [False]*n_agents
-        episode_step = 0
+
+        score = 0
+        step_episode = 0
+        if i < steps_exp:
+            Exploration = True
+        else:
+            Exploration = False
+
+        path_local = []
+        path_local.append(obs)
 
         while not done_reset:
-            actions = maddpg_agents.choose_action(obs)
-            # list type: list[array, tpye of array]
-            # example: [array([1.9764007], dtype=float32)]
+            actions = maddpg_agents.choose_action(obs, Exploration)
+            # list type, example: [-1.0, -1.0]
             obs_ = env.step(actions).copy()
 
             # For local observation problems, observations are not equal to states.
@@ -73,7 +86,7 @@ if __name__ == '__main__':
             # print(reward_term, reward_coll, reward_CORLEG)
             reward = reward_term + reward_coll + reward_CORLEG
 
-            if episode_step >= MAX_STEPS:
+            if step_episode >= steps_max:
                 done_reset = True
             # if all(done_goal):
             if any(done_goal):
@@ -82,20 +95,29 @@ if __name__ == '__main__':
                 done_reset = True
             memory.store_transition(obs, state, actions, reward, obs_, state_, done_goal)
 
-            if total_steps % 100 == 0 and not evaluate:
+            if steps_total % 100 == 0 and not evaluate:
                 maddpg_agents.learn(memory)
 
             obs = obs_.copy()
+            path_local.append(obs)
 
             score += sum(reward)
-            total_steps += 1
-            episode_step += 1
+            steps_total += 1
+            step_episode += 1
+
+        if score > score_best:
+            score_best = score
+            path_global = path_local
 
         score_history.append(score)
-        avg_score = np.mean(score_history[-100:])
+        score_avg = np.mean(score_history[-100:])
         if not evaluate:
-            if avg_score > best_score:
+            if score_avg > score_best_avg:
                 maddpg_agents.save_checkpoint()
-                best_score = avg_score
+                score_best_avg = score_avg
         if i % PRINT_INTERVAL == 0 and i > 0:
-            print('episode', i, 'average score {:.1f}'.format(avg_score))
+            print('episode', i, 'average score {:.1f}'.format(score_avg))
+
+    np.save(result_dir + '/score_history.npy', score_history)
+    np.save(result_dir + '/score_avg.npy', score_avg)
+    np.save(result_dir + '/path_global.npy', path_global)
