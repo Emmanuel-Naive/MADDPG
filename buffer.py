@@ -1,26 +1,26 @@
-'''
+"""
 Function for building buffer, where some trained data would be saved.
 
 Using:
 numpy: 1.21.5
-'''
-
+"""
 import numpy as np
 
+
 class MultiAgentReplayBuffer:
-    '''
+    """
     Replay Buffer for Multi agents
-    '''
+    """
     def __init__(self, max_size, actor_dims, critic_dims,
                  n_agents, n_actions, batch_size):
-        '''
+        """
         :param max_size: number for max size for storing transition
         :param critic_dims: number of dimensions for the critic
         :param actor_dims: number of dimensions for the actor
         :param n_actions: number of actions
         :param n_agents: number of agents
         :param batch_size: number of batch size
-        '''
+        """
         self.mem_size = max_size
         self.mem_cntr = 0
         self.n_agents = n_agents
@@ -50,10 +50,9 @@ class MultiAgentReplayBuffer:
             self.actor_action_memory.append(
                             np.zeros((self.mem_size, self.n_actions)))
 
-
-    def store_transition(self, raw_obs, state, action, reward, 
-                               raw_obs_, state_, done):
-        '''
+    def store_transition(self, raw_obs, state, action, reward,
+                         raw_obs_, state_, done):
+        """
         :param raw_obs: state raw observations
         :param state:
         :param action:
@@ -61,7 +60,7 @@ class MultiAgentReplayBuffer:
         :param raw_obs_: new state raw observations
         :param state_: new states
         :param done: terminal flags
-        '''
+        """
         index = self.mem_cntr % self.mem_size
 
         for agent_idx in range(self.n_agents):
@@ -76,7 +75,7 @@ class MultiAgentReplayBuffer:
         self.mem_cntr += 1
 
     def sample_buffer(self):
-        '''
+        """
         :return:  appropriate memories
             actor_states: individual arrays of states
             states: flattened combination of state arrays
@@ -85,8 +84,8 @@ class MultiAgentReplayBuffer:
             actor_new_states: flattened combination of new action arrays
             states_: individual arrays of new states
             terminal: individual arrays of terminal flags
-        '''
-        max_mem = min(self.mem_cntr, self.mem_size) # current memory size
+        """
+        max_mem = min(self.mem_cntr, self.mem_size)  # current memory size
         # memories could not be selected multiple times (replace=False)
         batch = np.random.choice(max_mem, self.batch_size, replace=False)
 
@@ -103,13 +102,12 @@ class MultiAgentReplayBuffer:
             actor_new_states.append(self.actor_new_state_memory[agent_idx][batch])
             actions.append(self.actor_action_memory[agent_idx][batch])
 
-        return actor_states, states, actions, rewards, \
-               actor_new_states, states_, terminal
+        return actor_states, states, actions, rewards, actor_new_states, states_, terminal
 
     def ready(self):
-        '''
+        """
         :return: memory state
             Ture:  fill up the batch size
-        '''
+        """
         if self.mem_cntr >= self.batch_size:
             return True
