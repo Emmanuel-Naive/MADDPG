@@ -1,4 +1,4 @@
-'''
+"""
 Function for building networks
 
 For each part(actor or critic), there are two network.
@@ -9,18 +9,17 @@ The same situation happens in the actor part.
 
 Using:
 pytroch: 1.10.2
-'''
-
+"""
 import os
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+
 class CriticNetwork(nn.Module):
-    def __init__(self, beta, input_dims, fc1_dims, fc2_dims, 
-                    n_agents, n_actions, name, chkpt_dir):
-        '''
+    def __init__(self, beta, input_dims, fc1_dims, fc2_dims, n_agents, n_actions, name, chkpt_dir):
+        """
         :param beta: learning rate of critic network
         :param input_dims: number of dimensions for inputs
         :param fc1_dims: number of dimensions for first layer
@@ -29,8 +28,8 @@ class CriticNetwork(nn.Module):
         :param n_actions: number of actions
         :param name: name of network
         :param chkpt_dir: check point directory
-        '''
-        super(CriticNetwork, self).__init__() # call the superclass(nn.Module) constructor
+        """
+        super(CriticNetwork, self).__init__()  # call the superclass(nn.Module) constructor
 
         self.chkpt_file = os.path.join(chkpt_dir, name)
         # network structure
@@ -44,11 +43,11 @@ class CriticNetwork(nn.Module):
         self.to(self.device)
 
     def forward(self, state, action):
-        '''
+        """
         :param state:
         :param action:
         :return: result of the network
-        '''
+        """
         x = F.relu(self.fc1(T.cat([state, action], dim=1)))
         x = F.relu(self.fc2(x))
         q = self.q(x)
@@ -63,18 +62,16 @@ class CriticNetwork(nn.Module):
 
 
 class ActorNetwork(nn.Module):
-    def __init__(self, alpha, input_dims, fc1_dims, fc2_dims, 
-                 n_actions, name, chkpt_dir):
-        '''
+    def __init__(self, alpha, input_dims, fc1_dims, fc2_dims, n_actions, name, chkpt_dir):
+        """
         :param alpha: learning rate of actor network
         :param input_dims: number of dimensions for inputs
         :param fc1_dims: number of dimensions for first layer
         :param fc2_dims: number of dimensions for second layer
-        :param n_agents: number of agents
         :param n_actions: number of actions
         :param name: name of network
         :param chkpt_dir: check point directory
-        '''
+        """
         super(ActorNetwork, self).__init__()
 
         self.chkpt_file = os.path.join(chkpt_dir, name)
@@ -89,9 +86,14 @@ class ActorNetwork(nn.Module):
         self.to(self.device)
 
     def forward(self, state):
+        """
+        :param state:
+        :return: result of the network
+        """
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
-        pi = T.softmax(self.pi(x), dim=1)
+        # output range (-1,1)
+        pi = T.tanh_(self.pi(x))
 
         return pi
 
@@ -100,4 +102,3 @@ class ActorNetwork(nn.Module):
 
     def load_checkpoint(self):
         self.load_state_dict(T.load(self.chkpt_file))
-
