@@ -117,7 +117,10 @@ if __name__ == '__main__':
                 score_best_avg = score_avg
         if i % PRINT_INTERVAL == 0 and i > 0:
             print('episode', i, 'average score {:.1f}'.format(score_avg))
-
+    
+    # save networks
+    maddpg_agents.save_checkpoint()
+    # save data
     np.save(result_dir + '/score_history.npy', score_history)
     np.save(result_dir + '/score_avg.npy', score_avg)
     np.save(result_dir + '/path_global.npy', path_global)
