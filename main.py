@@ -32,7 +32,7 @@ if __name__ == '__main__':
                            dis_redun, dis_safe)
 
     PRINT_INTERVAL = 500
-    N_GAMES = 50000
+    N_GAMES = 30000
     steps_max = 1000
     steps_exp = N_GAMES / 2
     steps_total = 0
@@ -117,7 +117,7 @@ if __name__ == '__main__':
                 score_best_avg = score_avg
         if i % PRINT_INTERVAL == 0 and i > 0:
             print('episode', i, 'average score {:.1f}'.format(score_avg))
-    
+
     # save networks
     maddpg_agents.save_checkpoint()
     # save data
