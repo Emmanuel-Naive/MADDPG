@@ -32,7 +32,6 @@ if __name__ == '__main__':
                            dis_redun, dis_safe)
 
     PRINT_INTERVAL = 500
-    N_GAMES = 30000
     steps_max = 1000  # can be considered as the simulation time
     steps_exp = N_GAMES / 2
     steps_total = 0
