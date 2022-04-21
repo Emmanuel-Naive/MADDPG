@@ -6,25 +6,7 @@ numpy: 1.21.5
 math: Built-in package of Python
 Python: 3.9
 """
-import Scenarios as Scen
 from functions import *
-
-
-def get_data(scenario_name):
-    """
-    Get data from the saved file (scenario)
-    :param scenario_name:
-    :return: data in this given scenario, which includes:
-        ships_num: number of ships
-        ships_init: initial positions of ships
-        ships_term: target positions of ships
-        ships_speed: (constant) speeds of ships
-        ships_head: initial heading angles of ships
-        ship_actions: action spaces of each ship (assume the spaces for all ships are same)
-    """
-    scenario = Scen.load(scenario_name + ".py")
-    return scenario
-
 
 class MultiAgentEnv:
     """
