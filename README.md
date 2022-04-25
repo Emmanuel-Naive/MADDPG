@@ -8,6 +8,7 @@
   pytorch: 1.10.2  
   numpy: 1.21.5  
   matplotlib: 3.4.1  
+  ffmpeg: 2.7.0  
   os, math, random: Python built-in package
 
 ## Known problems:
