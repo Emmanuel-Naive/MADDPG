@@ -22,12 +22,12 @@ ships_head = np.zeros((ships_num, 1))
 ships_init[0, :] = np.array([5000, 0])
 ships_goal[0, :] = np.array([5000, 10000])
 ships_speed[0] = 20
-ships_head[0] = 0
+ships_head[0] = 90
 
 ships_init[1, :] = np.array([0, 5000])
 ships_goal[1, :] = np.array([10000, 5000])
 ships_speed[1] = 20
-ships_head[1] = 90
+ships_head[1] = 0
 
 ships_init[2, :] = np.array([10000, 5000])
 ships_goal[2, :] = np.array([0, 5000])
