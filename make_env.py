@@ -30,7 +30,6 @@ class MultiAgentEnv:
         self.ships_term = self.case.ships_goal.copy()
         self.ship_action_space = self.case.ship_action_space
         self.angle_limit = self.case.angle_limit
-        self.baseline = 1.5
         # ships_obs_space = 2: position
         # ship__obs_space = 3: position + heading
         self.ship_obs_space = 3
