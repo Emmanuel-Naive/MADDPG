@@ -3,6 +3,7 @@ Codes for animation
 
 Using:
 matplotlib: 3.4.1
+ffmpeg: 2.7.0
 """
 import os
 import matplotlib.pyplot as plt
@@ -12,16 +13,18 @@ from collections import deque
 
 
 def animate(i):
-    if i == 0:
-        history_x.clear()
-        history_y.clear()
-
-    history_x.appendleft(states[i, 0, 0])
-    history_y.appendleft(states[i, 0, 1])
-    trace1.set_data(history_x, history_y)
-    trace2.set_data(states[i, 0, 3], states[i, 0, 4])
     time_text.set_text(time_template % (i * dt))
-    return trace1, time_text
+    for n in range(env.ships_num):
+        if i > 0:
+            headings[n] = ax.patches.remove(headings[n])
+        past_trajectory[n].set_xdata(states[:i, 0, 3 * n])
+        past_trajectory[n].set_ydata(states[:i, 0, 3 * n + 1])
+        if i > 0:
+            dx = states[i, 0, 3 * n] - states[i-1, 0, 3 * n]
+            dy = states[i, 0, 3 * n + 1] - states[i-1, 0, 3 * n + 1]
+            headings[n] = ax.arrow(states[i, 0, 3 * n], states[i, 0, 3 * n + 1], dx, dy,
+                                   head_width=800, head_length=800, fc=colors[n], ec=colors[n])
+    # return time_text, ship_markers, past_trajectory
 
 
 if __name__ == '__main__':
@@ -33,10 +36,8 @@ if __name__ == '__main__':
     # scenario = '3Ships_Cross&Headon'
     env = get_data(scenario)
 
-    dt = 0.05
+    dt = 1
     t_step = len(states)
-    t_stop = t_step * dt
-    history_len = 100
 
     x = states[:, 0, 0]
     y = states[:, 0, 1]
@@ -44,21 +45,30 @@ if __name__ == '__main__':
     for i in range(1, env.ships_num):
         x = np.r_[x, states[:, 0, 3 * i]]
         y = np.r_[x, states[:, 0, 3 * i + 1]]
-    x_min = np.min(x) - 100
-    x_max = np.max(x) + 100
-    y_min = np.min(y) - 100
-    y_max = np.max(y) + 100
+    x_min = np.min(x) - 500
+    x_max = np.max(x) + 500
+    y_min = np.min(y) - 500
+    y_max = np.max(y) + 500
+
+    past_trajectory = []
+    headings = []
+    colors = ['b', 'r', 'g', 'y', 'c', 'm']
+    # colors = ['blue', 'purple', 'darkolivegreen', 'teal', 'darkorange', 'saddlebrown']
 
     fig = plt.figure()
     ax = fig.add_subplot(autoscale_on=False, xlim=(x_min, x_max), ylim=(y_min, y_max))
     ax.set_aspect('equal')
 
-    trace1, = ax.plot([], [], '.-', lw=1, ms=2)
-    trace2, = ax.plot([], [], '.-', lw=1, ms=2)
+    for i in range(env.ships_num):
+        past_trajectory.append(ax.plot([], [], c=colors[i], alpha=0.8)[0])
+        headings.append(ax.arrow([], [], [], []))
     time_template = 'time = %.1fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
-    history_x, history_y = deque(maxlen=history_len), deque(maxlen=history_len)
 
+    frequency = 1  # when this value is set lower than 1, the
     ani = animation.FuncAnimation(
-        fig, animate, len(states), interval=dt * 1000, blit=True)
+        fig, animate, len(states), interval=frequency, blit=False)
     plt.show()
+
+    # ani.save("result.gif", writer='pillow')
+    ani.save(result_dir + '/animation.mp4', writer='ffmpeg', fps=1000 / 20)
