@@ -12,6 +12,7 @@ from check_state import CheckState
 
 if __name__ == '__main__':
     scenario = '2Ships_Cross'
+    # scenario = '3Ships_Cross&Headon'
     env = MultiAgentEnv(scenario)
     n_agents = env.ships_num
     actor_dims = env.ships_obs_space
@@ -32,6 +33,7 @@ if __name__ == '__main__':
                            dis_redun, dis_safe)
 
     PRINT_INTERVAL = 500
+    N_GAMES = 30000
     steps_max = 1000  # can be considered as the simulation time
     steps_exp = N_GAMES / 2
     steps_total = 0
@@ -46,6 +48,7 @@ if __name__ == '__main__':
 
     path_global = []
     result_dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedResult'
+    rewards_global = []
 
     for i in range(N_GAMES + 1):
         obs = env.reset()
@@ -63,6 +66,7 @@ if __name__ == '__main__':
 
         path_local = []
         path_local.append(obs.reshape(1, -1))
+        rewards_local =[]
 
         while not done_reset:
             actions = maddpg_agents.choose_action(obs, Exploration)
@@ -83,8 +87,9 @@ if __name__ == '__main__':
 
             reward_CORLEG = check_env.check_CORLEGs(obs, obs_)
 
-            # print(reward_term, reward_coll, reward_CORLEG)
             reward = reward_term + reward_coll + reward_CORLEG
+            # print(reward, reward_term, reward_coll, reward_CORLEG)
+            rewards_local.append(reward)
 
             if step_episode >= steps_max:
                 done_reset = True
@@ -107,10 +112,12 @@ if __name__ == '__main__':
 
         if i == 0:
             score_best = score
-            # np.save(result_dir + '/test.npy', path_local)
+            np.save(result_dir + '/path_test.npy', path_local)
+            np.save(result_dir + '/reward_test.npy', rewards_global)
         elif score > score_best:
             score_best = score
             path_global = path_local
+            rewards_global = rewards_local
 
         score_history.append(score)
         score_avg = np.mean(score_history[-100:])
@@ -126,3 +133,4 @@ if __name__ == '__main__':
     # save data
     np.save(result_dir + '/score_history.npy', score_history)
     np.save(result_dir + '/path_global.npy', path_global)
+    np.save(result_dir + '/rewards_global.npy', rewards_global)
