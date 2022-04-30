@@ -1,5 +1,5 @@
 """
-Codes for plotting
+Codes for plotting paths
 
 Using:
 matplotlib: 3.4.1
@@ -42,20 +42,31 @@ def draw_path(num_ships, ships_init, ships_goal, states):
     plt.show()
 
 
+def dra_score(score):
+    plt.plot(score)
+    plt.xlabel('episode')
+    plt.ylabel('score')
+    plt.show()
+
+
 if __name__ == '__main__':
     result_dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedResult'
     states = np.load(result_dir + '/path_global.npy')
     # states = np.load(result_dir + '/path_test.npy')
+    rewards = np.load(result_dir + '/rewards_global.npy')
+    scores = np.load(result_dir + '/score_history.npy')
 
-    scenario = '2Ships_Cross'
+    # scenario = '2Ships_Cross'
+    scenario = '2Ships_Headon'
     # scenario = '3Ships_Cross&Headon'
     env = get_data(scenario)
 
-    x = np.r_[env.ships_init[:,0], env.ships_goal[:, 0]]
-    y = np.r_[env.ships_init[:,1], env.ships_goal[:, 1]]
+    x = np.r_[env.ships_init[:, 0], env.ships_goal[:, 0]]
+    y = np.r_[env.ships_init[:, 1], env.ships_goal[:, 1]]
     # x_min = np.min(x) - 20
     # x_max = np.max(x) + 20
     # y_min = np.min(y) - 20
     # y_max = np.max(y) + 20
 
-    draw_path(env.ships_num, env.ships_init, env.ships_goal, states)
+    # draw_path(env.ships_num, env.ships_init, env.ships_goal, states)
+    dra_score(scores)
