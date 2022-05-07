@@ -93,7 +93,7 @@ class ActorNetwork(nn.Module):
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
         # output range (-1,1)
-        pi = T.tanh_(self.pi(x))
+        pi = nn.Tanh()(self.pi(x))
 
         return pi
 
