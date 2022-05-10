@@ -4,6 +4,7 @@ Code for some utility functions.
 Using:
 numpy: 1.21.5
 """
+import os
 import math
 import numpy as np
 import Scenarios as Scen
@@ -84,7 +85,7 @@ def warp_to_360(degrees, n):
     return res
 
 
-def euc_dist(x_1, y_1, x_2, y_2):
+def euc_dist(x_1, x_2, y_1, y_2):
     """
     calculate the Euclidean distance
     :param x_1:
@@ -169,10 +170,10 @@ def colregs_rule(ship1_x, ship1_y, ship1_psi, ship1_u, ship2_x, ship2_y, ship2_p
         rule = 'OT-GW'
     # Crossing, give way
     elif 0 < RB_os_ts < 112.5 and 10 > RB_ts_os > -112.5:
-        rule = 'CR-GW'
+        rule = 'CR-SO'
     # Crossing, stand on
     elif 10 > RB_os_ts > -112.5 and 0 < RB_ts_os < 112.5:
-        rule = 'CR-SO'
+        rule = 'CR-GW'
     else:
         rule = 'Null'
     return rule
@@ -208,3 +209,17 @@ def colregs_rule(ship1_x, ship1_y, ship1_psi, ship1_u, ship2_x, ship2_y, ship2_p
     # print(relative_bearing(ship2_x, ship2_y, ship2_psi, ship1_x, ship1_y))
     # print(colregs_rule(ship1_x, ship1_y, ship1_psi, ship1_u, ship2_x, ship2_y, ship2_psi, ship2_u))
     # print(colregs_rule(ship2_x, ship2_y, ship2_psi, ship2_u, ship1_x, ship1_y, ship1_psi, ship1_u))
+
+def delete_files(dir_path):
+    """
+    delete all files in the given folder
+    :param dir_path: the path of the given folder
+    :return:
+    """
+    for root, dirs, files in os.walk(dir_path, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))  # delete files
+
+if __name__ == '__main__':
+    dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedTrainingProcess'
+    delete_files(dir)
