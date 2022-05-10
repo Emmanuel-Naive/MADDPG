@@ -7,15 +7,16 @@ numpy: 1.21.5
 from functions import *
 from make_env import MultiAgentEnv
 
+
 class CheckState:
-    def __init__(self, num_agent, pos_init, pos_term, head_init, vel_init, dis_redun, dis_safe):
+    def __init__(self, num_agent, pos_init, pos_term, head_init, vel_init, dis_redundant, dis_safe):
         """
         :param num_agent: number of agents
         :param pos_init: initial positions of ships
         :param pos_term: terminal positions of ships
         :param head_init: initial heading angles of ships
         :param vel_init: initial velocities of ships
-        :param dis_redun: redundant distance
+        :param dis_redundant: redundant distance
         :param dis_safe: safe distance
         """
         self.agents_num = num_agent
@@ -23,7 +24,7 @@ class CheckState:
         self.pos_term = pos_term
         self.heads = head_init
         self.speeds = vel_init
-        self.dis_redun = dis_redun
+        self.dis_r = dis_redundant
         self.dis_safe = dis_safe
 
         distance = []
@@ -31,7 +32,7 @@ class CheckState:
             for ship_j in range(ship_i+1, self.agents_num):
                 distance.append(euc_dist(self.pos_init[ship_i, 0], self.pos_init[ship_j, 0],
                                          self.pos_init[ship_i, 1], self.pos_init[ship_j, 1]))
-        self.dis_cloest = min(distance)
+        self.dis_closest = min(distance)
 
         self.rules_list = ['Null'] * self.agents_num * self.agents_num
         self.rules_table = np.array(self.rules_list).reshape(self.agents_num, self.agents_num)
@@ -44,6 +45,7 @@ class CheckState:
         Function for checking destination
         :param state:
         :param next_state:
+        :param done_term: flag of done state
         :return: reward_term and done_term states
                  reward_term: reward according to terminal states
         """
@@ -52,7 +54,7 @@ class CheckState:
             if not done_term[ship_idx]:
                 dis_term = euc_dist(next_state[ship_idx, 0], self.pos_term[ship_idx, 0],
                                     next_state[ship_idx, 1], self.pos_term[ship_idx, 1])
-                if dis_term < self.dis_redun:
+                if dis_term < self.dis_r:
                     done_term[ship_idx] = True
                     reward_term[ship_idx] = 100
                 else:
@@ -78,8 +80,8 @@ class CheckState:
                                     next_state[ship_i, 1], next_state[ship_j, 1])
                 dis_last = euc_dist(state[ship_i, 0], state[ship_j, 0],
                                     state[ship_i, 1], state[ship_j, 1])
-                if dis_coll < self.dis_cloest:
-                    self.dis_cloest = dis_coll
+                if dis_coll < self.dis_closest:
+                    self.dis_closest = dis_coll
 
                 if dis_coll < self.dis_safe:
                     done_coll = True
@@ -130,10 +132,11 @@ if __name__ == '__main__':
     # obs = ships.ships_pos
     # actions = [5, 10]
     # obs_ = ships.step(actions)
-    dis_redun = 10
-    dis_safe = 15
-    check_env = CheckState(ships.ships_num, ships.ships_pos, ships.ships_term, ships.ships_head, ships.ships_speed, dis_redun, dis_safe)
-    #
+    dis_r = 10
+    dis_s = 15
+    check_env = CheckState(ships.ships_num, ships.ships_pos, ships.ships_term, ships.ships_head, ships.ships_speed,
+                           dis_r, dis_s)
+
     # done_term = [False] * ships.ships_num
     # reward_term, done_term = check_env.check_term(obs, obs_, done_term)
     # reward_coll, done_coll = check_env.check_coll(obs, obs_)
