@@ -47,12 +47,12 @@ class Agent:
 
         self.update_network_parameters(tau=1)
 
-    def choose_action(self, observation, exploration=True, mu=0, sigma=0.1):
+    def choose_action(self, observation, exploration=True, mu=0, sigma=0.2):
         """
         :param observation:
         :param exploration: exploration flag
-        :param mu: mean value of Gaussian noise
-        :param sigma: standard deviation of Gaussian noise
+        :param mu: mean value of Gaussian noise, default value is 0
+        :param sigma: standard deviation of Gaussian noise, , default value is 0.2
         :return:
         """
         # observations need to be converted to a tensor
