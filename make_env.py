@@ -83,3 +83,7 @@ if __name__ == '__main__':
     print(positions)
     # print(len(ships.ship_actions))
     # print(sum(ships.ships_obs_space))
+
+
+
+    
