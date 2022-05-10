@@ -78,6 +78,7 @@ class ActorNetwork(nn.Module):
 
         self.fc1 = nn.Linear(input_dims, fc1_dims)
         self.fc2 = nn.Linear(fc1_dims, fc2_dims)
+        # self.fc2 = nn.Linear(input_dims, fc2_dims)
         self.pi = nn.Linear(fc2_dims, n_actions)
 
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
@@ -92,8 +93,10 @@ class ActorNetwork(nn.Module):
         """
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
+        # x = F.relu(self.fc2(state))
         # output range (-1,1)
-        pi = T.tanh_(self.pi(x))
+        # pi = nn.Tanh()(self.pi(x))
+        pi = nn.Softsign()(self.pi(x))
 
         return pi
 
