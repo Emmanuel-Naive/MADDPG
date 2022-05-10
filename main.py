@@ -32,8 +32,7 @@ if __name__ == '__main__':
                            dis_redun, dis_safe)
 
     PRINT_INTERVAL = 500
-    N_GAMES = 50000
-    steps_max = 1000
+    steps_max = 1000  # can be considered as the simulation time
     steps_exp = N_GAMES / 2
     steps_total = 0
 
@@ -47,6 +46,7 @@ if __name__ == '__main__':
 
     path_global = []
     result_dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedResult'
+
     for i in range(N_GAMES + 1):
         obs = env.reset()
         # limits on ships' heading angles
@@ -62,7 +62,7 @@ if __name__ == '__main__':
             Exploration = False
 
         path_local = []
-        path_local.append(obs)
+        path_local.append(obs.reshape(1, -1))
 
         while not done_reset:
             actions = maddpg_agents.choose_action(obs, Exploration)
@@ -99,13 +99,16 @@ if __name__ == '__main__':
                 maddpg_agents.learn(memory)
 
             obs = obs_.copy()
-            path_local.append(obs)
+            path_local.append(state)
 
             score += sum(reward)
             steps_total += 1
             step_episode += 1
 
-        if score > score_best:
+        if i == 0:
+            score_best = score
+            # np.save(result_dir + '/test.npy', path_local)
+        elif score > score_best:
             score_best = score
             path_global = path_local
 
@@ -118,6 +121,8 @@ if __name__ == '__main__':
         if i % PRINT_INTERVAL == 0 and i > 0:
             print('episode', i, 'average score {:.1f}'.format(score_avg))
 
+    # save networks
+    maddpg_agents.save_checkpoint()
+    # save data
     np.save(result_dir + '/score_history.npy', score_history)
-    np.save(result_dir + '/score_avg.npy', score_avg)
     np.save(result_dir + '/path_global.npy', path_global)
