@@ -17,7 +17,7 @@ from networks import ActorNetwork, CriticNetwork
 
 class Agent:
     def __init__(self, actor_dims, critic_dims, n_actions, n_agents, agent_idx, chkpt_dir,
-                 alpha=0.01, beta=0.01, fc1=64, fc2=64, gamma=0.95, tau=0.01):
+                 alpha=0.01, beta=0.01, fc1=128, fc2=64, gamma=0.95, tau=0.01):
         """
         :param actor_dims: number of dimensions for the actor
         :param critic_dims: number of dimensions for the critic
@@ -27,7 +27,7 @@ class Agent:
         :param chkpt_dir: check point directory
         :param alpha: learning rate of actor (target) network, default value is 0.01
         :param beta: learning rate of critic (target) network, default value is 0.01
-        :param fc1: number of dimensions for first layer, default value is 64
+        :param fc1: number of dimensions for first layer, default value is 128
         :param fc2: number of dimensions for second layer, default value is 64
         :param gamma: discount factor, default value is 0.95
         :param tau: learning rate for adam optimization,  default value is 0.01
@@ -47,12 +47,12 @@ class Agent:
 
         self.update_network_parameters(tau=1)
 
-    def choose_action(self, observation, exploration=True, mu=0, sigma=0.2):
+    def choose_action(self, observation, exploration=True, mu=0, sigma=0.25):
         """
         :param observation:
         :param exploration: exploration flag
         :param mu: mean value of Gaussian noise, default value is 0
-        :param sigma: standard deviation of Gaussian noise, , default value is 0.2
+        :param sigma: standard deviation of Gaussian noise, default value is 0.2
         :return:
         """
         # observations need to be converted to a tensor
