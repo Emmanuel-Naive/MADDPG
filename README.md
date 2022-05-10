@@ -11,5 +11,5 @@
   ffmpeg: 2.7.0  
   os, math, random: Python built-in package
 
-## Known problems:
-  Gpu acceleration technology(CUDA 11.2, GPU GTX965m) is used in training process, but the profermance is not obvious.
+## Known issues:
+  Networks of agents in this project are simple. That is why GPU acceleration technology(CUDA 11.2, GPU: GTX965m) is used in training process, but the profermance is not obvious.
