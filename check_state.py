@@ -26,19 +26,19 @@ class CheckState:
         self.speeds = vel_init
         self.dis_r = dis_redundant
         self.dis_s = dis_safe
+        if num_agent > 1:
+            distance = []
+            for ship_i in range(self.agents_num):
+                for ship_j in range(ship_i+1, self.agents_num):
+                    distance.append(euc_dist(self.pos_init[ship_i, 0], self.pos_init[ship_j, 0],
+                                             self.pos_init[ship_i, 1], self.pos_init[ship_j, 1]))
+            self.dis_closest = min(distance)
 
-        distance = []
-        for ship_i in range(self.agents_num):
-            for ship_j in range(ship_i+1, self.agents_num):
-                distance.append(euc_dist(self.pos_init[ship_i, 0], self.pos_init[ship_j, 0],
-                                         self.pos_init[ship_i, 1], self.pos_init[ship_j, 1]))
-        self.dis_closest = min(distance)
-
-        self.rules_list = ['Null'] * self.agents_num * self.agents_num
-        self.rules_table = np.array(self.rules_list).reshape(self.agents_num, self.agents_num)
-        for ship_i in range(self.agents_num):
-            for ship_j in range(self.agents_num):
-                self.rules_table[ship_i, ship_j] = 'Null'
+            self.rules_list = ['Null'] * self.agents_num * self.agents_num
+            self.rules_table = np.array(self.rules_list).reshape(self.agents_num, self.agents_num)
+            for ship_i in range(self.agents_num):
+                for ship_j in range(self.agents_num):
+                    self.rules_table[ship_i, ship_j] = 'Null'
 
     def check_term(self, state, next_state, done_term):
         """
@@ -53,7 +53,7 @@ class CheckState:
         for ship_idx in range(self.agents_num):
             if not done_term[ship_idx]:
                 dis_to_goal = euc_dist(next_state[ship_idx, 0], self.pos_term[ship_idx, 0],
-                                    next_state[ship_idx, 1], self.pos_term[ship_idx, 1])
+                                       next_state[ship_idx, 1], self.pos_term[ship_idx, 1])
                 if dis_to_goal < self.dis_r:
                     done_term[ship_idx] = True
                     reward_term[ship_idx] = 100
@@ -62,6 +62,10 @@ class CheckState:
                     dis_last = euc_dist(state[ship_idx, 0], self.pos_term[ship_idx, 0],
                                         state[ship_idx, 1], self.pos_term[ship_idx, 1])
                     reward_term[ship_idx] = dis_last - dis_to_goal
+                    # if dis_last > dis_to_goal:
+                    #     reward_term[ship_idx] = dis_last - dis_to_goal
+                    # else:
+                    #     reward_term[ship_idx] = dis_last - dis_to_goal - 10
         return reward_term, done_term
 
     def check_coll(self, state, next_state):
@@ -118,7 +122,7 @@ class CheckState:
                         head[ship_j], self.speeds[ship_j])
                     # get reward according heading angles
                     if self.rules_table[ship_i, ship_j] == 'HO-GW' or 'OT-GW' or 'CR-GW':
-                        reward_CORLEGs[ship_i] += head_diff[ship_i]
+                        reward_CORLEGs[ship_i] -= head_diff[ship_i]
                     if self.rules_table[ship_i, ship_j] == 'OT-SO' or 'CR-SO':
                         if head_diff[ship_i] == 0:
                             reward_CORLEGs[ship_i] += 5
