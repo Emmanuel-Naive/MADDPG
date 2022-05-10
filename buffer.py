@@ -1,5 +1,6 @@
 """
 Function for building buffer, where some trained data would be saved.
+
 Using:
 numpy: 1.21.5
 """
@@ -10,7 +11,6 @@ class MultiAgentReplayBuffer:
     """
     Replay Buffer for Multi agents
     """
-
     def __init__(self, max_size, actor_dims, critic_dims,
                  n_agents, n_actions, batch_size):
         """
@@ -44,11 +44,11 @@ class MultiAgentReplayBuffer:
 
         for i in range(self.n_agents):
             self.actor_state_memory.append(
-                np.zeros((self.mem_size, self.actor_dims[i])))
+                            np.zeros((self.mem_size, self.actor_dims[i])))
             self.actor_new_state_memory.append(
-                np.zeros((self.mem_size, self.actor_dims[i])))
+                            np.zeros((self.mem_size, self.actor_dims[i])))
             self.actor_action_memory.append(
-                np.zeros((self.mem_size, self.n_actions)))
+                            np.zeros((self.mem_size, self.n_actions)))
 
     def store_transition(self, raw_obs, state, action, reward,
                          raw_obs_, state_, done):
@@ -102,8 +102,7 @@ class MultiAgentReplayBuffer:
             actor_new_states.append(self.actor_new_state_memory[agent_idx][batch])
             actions.append(self.actor_action_memory[agent_idx][batch])
 
-        return actor_states, states, actions, rewards, \
-               actor_new_states, states_, terminal
+        return actor_states, states, actions, rewards, actor_new_states, states_, terminal
 
     def ready(self):
         """
