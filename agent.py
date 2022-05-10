@@ -3,9 +3,14 @@ Function for building agents
 Actually, agents could have different networks.
 However, for simplifying, all networks are built by the same structure and parameters (fc1 and fc2).
 Only learning rates are given by two different variables (alpha and beta).
+
 Using:
 pytroch: 1.10.2
+random: Built-in package of Python
+Python: 3.9
 """
+import random
+
 import numpy as np
 import torch as T
 from networks import ActorNetwork, CriticNetwork
@@ -13,7 +18,7 @@ from networks import ActorNetwork, CriticNetwork
 
 class Agent:
     def __init__(self, actor_dims, critic_dims, n_actions, n_agents, agent_idx, chkpt_dir,
-                    alpha=0.01, beta=0.01, fc1=64, fc2=64, gamma=0.95, tau=0.01):
+                 alpha=0.01, beta=0.01, fc1=64, fc2=64, gamma=0.95, tau=0.01):
         """
         :param actor_dims: number of dimensions for the actor
         :param critic_dims: number of dimensions for the critic
@@ -37,21 +42,47 @@ class Agent:
         self.critic = CriticNetwork(beta, critic_dims, fc1, fc2, n_agents, n_actions,
                                     chkpt_dir=chkpt_dir, name=self.agent_name+'_critic')
         self.target_actor = ActorNetwork(alpha, actor_dims, fc1, fc2, n_actions,
-                                        chkpt_dir=chkpt_dir, name=self.agent_name+'_target_actor')
+                                         chkpt_dir=chkpt_dir, name=self.agent_name+'_target_actor')
         self.target_critic = CriticNetwork(beta, critic_dims, fc1, fc2, n_agents, n_actions,
-                                        chkpt_dir=chkpt_dir, name=self.agent_name+'_target_critic')
+                                           chkpt_dir=chkpt_dir, name=self.agent_name+'_target_critic')
 
         self.update_network_parameters(tau=1)
 
-    def choose_action(self, observation):
+    def choose_action(self, observation, exploration=True, mu=0, sigma=0.1):
+        """
+        :param observation:
+        :param exploration: exploration flag
+        :param mu: mean value of Gaussian noise
+        :param sigma: standard deviation of Gaussian noise
+        :return:
+        """
         # observations need to be converted to a tensor
-        state = T.tensor([observation], dtype=T.float).to(self.actor.device)
-        actions = self.actor.forward(state)
-        # noise is used to explore
-        noise = T.rand(self.n_actions).to(self.actor.device)
-        action = actions + noise
+        # state = T.tensor([observation], dtype=T.float).to(self.actor.device)
+        # Creating a tensor from a list of numpy.ndarrays is extremely slow.
+        # Convert the list to a single numpy.ndarray before converting to a tensor.
+        obs = np.array(observation)
+        state = T.tensor(obs, dtype=T.float).to(self.actor.device)
+        outputs = self.actor.forward(state)
+
+        actions = []
+        for i in range(self.n_actions):
+            action = outputs[i]
+            if exploration:
+                # exploration (actions with noises)
+                # noise is used to explore, where Gaussian noise with the mean value of 0 is used.
+                noise = random.gauss(mu, sigma)
+                actions.append(action + noise)
+                if actions[i] < -1:
+                    actions[i] = -1
+                if actions[i] > 1:
+                    actions[i] = 1
+            else:
+                # no exploration (actions without noise)
+                actions.append(action)
+        actions = T.tensor(actions.copy(), dtype=T.float).to(self.actor.device)
+
         # tensors could not be used in codes, so the data need to be converted to numpy array
-        return action.detach().cpu().numpy()[0]
+        return actions.detach().cpu().numpy()[0]
 
     def update_network_parameters(self, tau=None):
         """
