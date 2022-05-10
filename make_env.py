@@ -8,6 +8,7 @@ Python: 3.9
 """
 from functions import *
 
+
 class MultiAgentEnv:
     """
     Environment for multi agents
@@ -35,8 +36,17 @@ class MultiAgentEnv:
         self.ship_obs_space = 3
         self.ships_obs = np.column_stack((self.ships_pos, self.ships_head))
         self.ships_obs_space = []
-        for ship_indx in range(self.ships_num):
+        for ship_idx in range(self.ships_num):
             self.ships_obs_space.append(self.ship_obs_space)
+        self.ships_given_pos = self.case.ships_given_pos
+        self.ships_pos_min = self.case.ships_pos_min
+        self.ships_pos_max = self.case.ships_pos_max
+        self.ships_x_min = self.case.ships_x_min
+        self.ships_y_min = self.case.ships_y_min
+        self.ships_x_max = self.case.ships_x_max
+        self.ships_y_max = self.case.ships_y_max
+        self.ships_dis_max = self.case.ships_dis_max
+        self.ships_vel_min = self.case.ships_vel_min
 
     def reset(self):
         """
