@@ -6,6 +6,7 @@
   
   (Python package:)  
   pytorch: 1.10.2  
+  tensorboard: 2.9.0  
   numpy: 1.21.5  
   matplotlib: 3.4.1  
   ffmpeg: 2.7.0  
