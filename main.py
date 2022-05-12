@@ -2,6 +2,7 @@
 Main function
 
 CUDA version: 11.2
+tensorboard: 2.9.0
 """
 from functions import *
 from normalization import *
@@ -26,7 +27,7 @@ if __name__ == '__main__':
 
     chkpt_dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedNetwork'
     maddpg_agents = MADDPG(chkpt_dir, actor_dims, critic_dims, n_agents, n_actions,
-                           fc1=env.ships_num * 32, fc2=16, alpha=0.01, beta=0.001)
+                           fc1=env.ships_num*16, fc2=8, alpha=0.001, beta=0.01)
 
     max_size = 1000000
     memory = MultiAgentReplayBuffer(max_size, actor_dims, critic_dims, n_agents, n_actions, batch_size=1024)
@@ -36,19 +37,21 @@ if __name__ == '__main__':
     check_env = CheckState(env.ships_num, env.ships_pos, env.ships_term, env.ships_head, env.ships_speed,
                            dis_redun, dis_safe)
 
-    PRINT_INTERVAL = 500
-    steps_games = 20000
+    steps_games = 30000  # number of maximum episodes
     steps_exp = steps_games / 2
     # a reasonable simulation time
     steps_max = (((env.ships_dis_max / env.ships_vel_min)//500) + 1) * 500
     print('... the maximum simulation step in each episode:', steps_max[0], '...')
     steps_total = 0
+    print_interval = 500
+    learn_interval = 100
 
     evaluate = False
     if evaluate:
         maddpg_agents.load_checkpoint()
 
     score_history = []
+    score_avg_history = []
     score_best = 0  # for saving path
     score_best_avg = 0  # for saving check points
 
@@ -64,8 +67,16 @@ if __name__ == '__main__':
         obs = env.reset()
         # limits on ships' heading angles
         obs[:, 2] = warp_to_360(obs[:, 2], env.ships_num)
+        n_obs = obs.copy()
+        # data normalization
+        for ship_idx in range(env.ships_num):
+            n_obs[ship_idx, 0] = \
+                nmlz_pos(obs[ship_idx, 0], env.ships_x_min[ship_idx], env.ships_x_max[ship_idx])
+            n_obs[ship_idx, 1] = \
+                nmlz_pos(obs[ship_idx, 1], env.ships_y_min[ship_idx], env.ships_y_max[ship_idx])
+            n_obs[ship_idx, 2] = nmlz_ang(obs[ship_idx, 2])
         done_reset = False
-        done_goal = [False]*n_agents
+        done_goal = [False] * n_agents
 
         score = 0
         step_episode = 0
@@ -73,16 +84,14 @@ if __name__ == '__main__':
             Exploration = True
         else:
             Exploration = False
-
+        Exploration = False
         path_local = []
         path_local.append(obs.reshape(1, -1))
         rewards_local =[]
 
         reward_alive = 1
         while not done_reset:
-            actions = maddpg_agents.choose_action(obs, Exploration)
-            # print(actions)
-
+            actions = maddpg_agents.choose_action(n_obs, Exploration)
             # list type, example: [-1.0, 1.0]
             obs_ = env.step(actions).copy()
             # print(obs_)
@@ -119,17 +128,9 @@ if __name__ == '__main__':
             #     done_reset = True
 
             # data normalization
-            n_obs = obs.copy()
             n_reward = reward.copy()
             n_obs_ = obs_.copy()
-            n_state_ = state_.copy()
             for ship_idx in range(env.ships_num):
-                n_obs[ship_idx,  0] = \
-                    nmlz_pos(obs[ship_idx, 0], env.ships_x_min[ship_idx], env.ships_x_max[ship_idx])
-                n_obs[ship_idx, 1] = \
-                    nmlz_pos(obs[ship_idx, 1], env.ships_y_min[ship_idx], env.ships_y_max[ship_idx])
-                n_obs[ship_idx, 2] = nmlz_ang(obs[ship_idx, 2])
-
                 n_obs_[ship_idx, 0] = \
                     nmlz_pos(obs_[ship_idx, 0], env.ships_x_min[ship_idx], env.ships_x_max[ship_idx])
                 n_obs_[ship_idx, 1] = \
@@ -143,7 +144,7 @@ if __name__ == '__main__':
             memory.store_transition(n_obs, n_state, actions, n_reward, n_obs_, n_state_, done_goal)
             if not memory.ready():
                 continue
-            elif steps_total % 100 == 0 and not evaluate:
+            elif steps_total % learn_interval == 0 and not evaluate:
                 critic_losses, actor_losses = maddpg_agents.learn(memory)
                 # Type in terminal: tensorboard --logdir=SavedLosses
                 # See losses in web page
@@ -170,11 +171,12 @@ if __name__ == '__main__':
 
         score_history.append(score)
         score_avg = np.mean(score_history[-100:])
+        score_avg_history.append(score)
         if not evaluate:
             if score_avg > score_best_avg:
                 maddpg_agents.save_checkpoint()
                 score_best_avg = score_avg
-        if i % PRINT_INTERVAL == 0 and i > 0:
+        if i % print_interval == 0 and i > 0:
             print('episode', i, 'average score {:.1f}'.format(score_avg))
 
     writer.close()
@@ -183,5 +185,6 @@ if __name__ == '__main__':
     # save data
     np.save(result_dir + '/path_last.npy', path_local)
     np.save(result_dir + '/score_history.npy', score_history)
+    np.save(result_dir + '/score_avg_history.npy', score_avg_history)
     np.save(result_dir + '/path_global.npy', path_global)
     np.save(result_dir + '/rewards_global.npy', rewards_global)
