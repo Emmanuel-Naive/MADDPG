@@ -5,7 +5,9 @@ Using:
 matplotlib: 3.4.1
 """
 import os
+import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import make_interp_spline
 from functions import *
 
 
@@ -42,8 +44,17 @@ def draw_path(num_ships, ships_init, ships_goal, states):
     plt.show()
 
 
-def dra_score(score):
-    plt.plot(score)
+def dra_score(score, weight):
+    scalar = scores
+    last = scalar[0]
+    smoothed = []
+    for point in scalar:
+        smoothed_val = last * weight + (1 - weight) * point
+        smoothed.append(smoothed_val)
+        last = smoothed_val
+
+    plt.plot(score, alpha=0.3, color='orange')
+    plt.plot(smoothed, color='orange')
     plt.xlabel('episode')
     plt.ylabel('score')
     plt.show()
@@ -51,7 +62,7 @@ def dra_score(score):
 
 if __name__ == '__main__':
     result_dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedResult'
-    states = np.load(result_dir + '/path_global.npy')
+    # states = np.load(result_dir + '/path_global.npy')
     # states = np.load(result_dir + '/path_test.npy')
     rewards = np.load(result_dir + '/rewards_global.npy')
     scores = np.load(result_dir + '/score_history.npy')
@@ -70,4 +81,4 @@ if __name__ == '__main__':
     # y_max = np.max(y) + 20
 
     # draw_path(env.ships_num, env.ships_init, env.ships_goal, states)
-    dra_score(scores)
+    dra_score(scores, weight=0.999)
