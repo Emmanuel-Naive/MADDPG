@@ -40,6 +40,10 @@ class MADDPG:
         for agent in self.agents:
             agent.load_models()
 
+    def reset_noise(self):
+        for agent_idx, agent in enumerate(self.agents):
+            agent.reset_noise()
+
     def choose_action(self, raw_obs, exploration=True):
         actions = []
         for agent_idx, agent in enumerate(self.agents):
@@ -93,9 +97,10 @@ class MADDPG:
             # current Q estimate
             critic_value = agent.critic.forward(states, old_actions).flatten()
             # target Q value
-            critic_value_ = agent.target_critic.forward(states_, new_actions).flatten()
-            critic_value_[dones[:, 0]] = 0.0
-            target = rewards[:, agent_idx] + agent.gamma * critic_value_
+            with T.no_grad():
+                critic_value_ = agent.target_critic.forward(states_, new_actions).flatten()
+                critic_value_[dones[:, 0]] = 0.0
+                target = rewards[:, agent_idx] + agent.gamma * critic_value_
             # critic loss
             critic_loss = F.mse_loss(critic_value.float(), target.float())
             # print(critic_loss)
