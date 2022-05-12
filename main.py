@@ -5,11 +5,11 @@ CUDA version: 11.2
 tensorboard: 2.9.0
 """
 from functions import *
-from normalization import *
-from maddpg import MADDPG
-from buffer import MultiAgentReplayBuffer
-from make_env import MultiAgentEnv
 from check_state import CheckState
+from buffer import MultiAgentReplayBuffer
+from maddpg import MADDPG
+from make_env import MultiAgentEnv
+from normalization import NormalizeData
 from torch.utils.tensorboard import SummaryWriter
 
 if __name__ == '__main__':
@@ -36,6 +36,8 @@ if __name__ == '__main__':
     dis_safe = 15
     check_env = CheckState(env.ships_num, env.ships_pos, env.ships_term, env.ships_head, env.ships_speed,
                            dis_redun, dis_safe)
+
+    norm_data = NormalizeData(env.ships_dis_max)
 
     steps_games = 30000  # number of maximum episodes
     steps_exp = steps_games / 2
@@ -70,11 +72,11 @@ if __name__ == '__main__':
         n_obs = obs.copy()
         # data normalization
         for ship_idx in range(env.ships_num):
-            n_obs[ship_idx, 0] = \
-                nmlz_pos(obs[ship_idx, 0], env.ships_x_min[ship_idx], env.ships_x_max[ship_idx])
-            n_obs[ship_idx, 1] = \
-                nmlz_pos(obs[ship_idx, 1], env.ships_y_min[ship_idx], env.ships_y_max[ship_idx])
-            n_obs[ship_idx, 2] = nmlz_ang(obs[ship_idx, 2])
+            n_obs[ship_idx, 0] = norm_data.nmlz_pos(obs[ship_idx, 0],
+                                                    env.ships_x_min[ship_idx], env.ships_x_max[ship_idx])
+            n_obs[ship_idx, 1] = norm_data.nmlz_pos(obs[ship_idx, 1],
+                                                    env.ships_y_min[ship_idx], env.ships_y_max[ship_idx])
+            n_obs[ship_idx, 2] = norm_data.nmlz_ang(obs[ship_idx, 2])
         done_reset = False
         done_goal = [False] * n_agents
 
@@ -82,9 +84,10 @@ if __name__ == '__main__':
         step_episode = 0
         if i < steps_exp:
             Exploration = True
+            maddpg_agents.reset_noise()
         else:
             Exploration = False
-        Exploration = False
+
         path_local = []
         path_local.append(obs.reshape(1, -1))
         rewards_local =[]
@@ -92,6 +95,7 @@ if __name__ == '__main__':
         reward_alive = 1
         while not done_reset:
             actions = maddpg_agents.choose_action(n_obs, Exploration)
+            # print(actions)
             # list type, example: [-1.0, 1.0]
             obs_ = env.step(actions).copy()
             # print(obs_)
@@ -131,13 +135,13 @@ if __name__ == '__main__':
             n_reward = reward.copy()
             n_obs_ = obs_.copy()
             for ship_idx in range(env.ships_num):
-                n_obs_[ship_idx, 0] = \
-                    nmlz_pos(obs_[ship_idx, 0], env.ships_x_min[ship_idx], env.ships_x_max[ship_idx])
-                n_obs_[ship_idx, 1] = \
-                    nmlz_pos(obs_[ship_idx, 1], env.ships_y_min[ship_idx], env.ships_y_max[ship_idx])
-                n_obs_[ship_idx, 2] = nmlz_ang(obs_[ship_idx, 2])
+                n_obs_[ship_idx, 0] = norm_data.nmlz_pos(obs_[ship_idx, 0],
+                                                         env.ships_x_min[ship_idx], env.ships_x_max[ship_idx])
+                n_obs_[ship_idx, 1] = norm_data.nmlz_pos(obs_[ship_idx, 1],
+                                                         env.ships_y_min[ship_idx], env.ships_y_max[ship_idx])
+                n_obs_[ship_idx, 2] = norm_data.nmlz_ang(obs_[ship_idx, 2])
 
-                n_reward[ship_idx] = nmlz_r(reward[ship_idx], reward_max)
+                n_reward[ship_idx] = norm_data.nmlz_r(reward[ship_idx], reward_max)
             n_state = n_obs.reshape(1, -1)
             n_state_ = n_obs_.reshape(1, -1)
 
@@ -149,7 +153,7 @@ if __name__ == '__main__':
                 # Type in terminal: tensorboard --logdir=SavedLosses
                 # See losses in web page
                 for agent_idx in range(env.ships_num):
-                    writer.add_scalar('agent_%s' % agent_idx+'_critic_loss', critic_losses[agent_idx], steps_total)
+                    writer.add_scalar('agent_%s' % agent_idx + '_critic_loss', critic_losses[agent_idx], steps_total)
                     writer.add_scalar('agent_%s' % agent_idx + '_actor_loss', actor_losses[agent_idx], steps_total)
 
             obs = obs_.copy()
