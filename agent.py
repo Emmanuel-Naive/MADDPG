@@ -6,18 +6,16 @@ Only learning rates are given by two different variables (alpha and beta).
 
 Using:
 pytroch: 1.10.2
-random: Built-in package of Python
-Python: 3.9
 """
-import random
 import numpy as np
 import torch as T
+from noise import OUNoise
 from networks import ActorNetwork, CriticNetwork
 
 
 class Agent:
     def __init__(self, actor_dims, critic_dims, n_actions, n_agents, agent_idx, chkpt_dir,
-                 alpha=0.01, beta=0.01, fc1=128, fc2=64, gamma=0.95, tau=0.01):
+                 alpha=0.01, beta=0.01, fc1=128, fc2=64, gamma=0.99, tau=0.01):
         """
         :param actor_dims: number of dimensions for the actor
         :param critic_dims: number of dimensions for the critic
@@ -29,8 +27,8 @@ class Agent:
         :param beta: learning rate of critic (target) network, default value is 0.01
         :param fc1: number of dimensions for first layer, default value is 128
         :param fc2: number of dimensions for second layer, default value is 64
-        :param gamma: discount factor, default value is 0.95
-        :param tau: learning rate for adam optimization,  default value is 0.01
+        :param gamma: discount factor, default value is 0.99
+        :param tau: tau of soft target updating,  default value is 0.01
         """
         self.gamma = gamma
         self.tau = tau
@@ -46,13 +44,19 @@ class Agent:
                                            chkpt_dir=chkpt_dir, name=self.agent_name+'_target_critic')
 
         self.update_network_parameters(tau=1)
+        self.exploration_noise = OUNoise(self.n_actions)
 
-    def choose_action(self, observation, exploration=True, mu=0, sigma=0.25):
+    def reset_noise(self):
+        """
+        Re-initialize the random process when an episode ends
+        :return:
+        """
+        self.exploration_noise.reset()
+
+    def choose_action(self, observation, exploration=True):
         """
         :param observation:
         :param exploration: exploration flag
-        :param mu: mean value of Gaussian noise, default value is 0
-        :param sigma: standard deviation of Gaussian noise, default value is 0.2
         :return:
         """
         # observations need to be converted to a tensor
@@ -63,21 +67,15 @@ class Agent:
         state = T.tensor(obs, dtype=T.float).to(self.actor.device)
         outputs = self.actor.forward(state)
 
-        actions = []
-        for i in range(self.n_actions):
-            action = outputs[i]
-            if exploration:
-                # exploration (actions with noises)
-                # noise is used to explore, where Gaussian noise with the mean value of 0 is used.
-                noise = random.gauss(mu, sigma)
-                actions.append(action + noise)
+        actions = outputs.data.cpu().numpy()
+        if exploration:
+            actions += self.exploration_noise.noise()
+            for i in range(self.n_actions):
                 if actions[i] < -1:
                     actions[i] = -1
                 if actions[i] > 1:
                     actions[i] = 1
-            else:
-                # no exploration (actions without noise)
-                actions.append(action)
+
         actions = T.tensor(actions.copy(), dtype=T.float).to(self.actor.device)
 
         # tensors could not be used in codes, so the data need to be converted to numpy array
@@ -85,8 +83,8 @@ class Agent:
 
     def update_network_parameters(self, tau=None):
         """
-        copy parameters of online networks to target networks
-        :param tau: learning rate for adam optimization
+        soft update target network via current network
+        :param tau: tau of soft target updating
         :return:
         """
         if tau is None:
@@ -102,6 +100,7 @@ class Agent:
                     (1-tau)*target_actor_state_dict[name].clone()
 
         self.target_actor.load_state_dict(actor_state_dict)
+        # self.target_actor.load_state_dict(actor_state_dict, strict=False)
         # critic part (similar with actor part)
         target_critic_params = self.target_critic.named_parameters()
         critic_params = self.critic.named_parameters()
@@ -113,6 +112,7 @@ class Agent:
                     (1-tau)*target_critic_state_dict[name].clone()
 
         self.target_critic.load_state_dict(critic_state_dict)
+        # self.target_critic.load_state_dict(critic_state_dict, strict=False)
 
     def save_models(self):
         self.actor.save_checkpoint()
