@@ -27,8 +27,9 @@ def animate(i):
 
 if __name__ == '__main__':
     result_dir = os.path.dirname(os.path.realpath(__file__)) + '\SavedResult'
-    states = np.load(result_dir + '/path_global.npy')
+    # states = np.load(result_dir + '/path_global.npy')
     # states = np.load(result_dir + '/path_last.npy')
+    states = np.load(result_dir + '/path_test.npy')
 
     scenario = '1Ship'
     # scenario = '2Ships_Cross'
