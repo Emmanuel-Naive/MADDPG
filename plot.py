@@ -4,10 +4,7 @@ Codes for plotting paths
 Using:
 matplotlib: 3.4.1
 """
-import os
-import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import make_interp_spline
 from functions import *
 
 
@@ -53,10 +50,12 @@ def dra_score(score, weight):
         smoothed.append(smoothed_val)
         last = smoothed_val
 
-    plt.plot(score, alpha=0.3, color='orange')
-    plt.plot(smoothed, color='orange')
+    plt.plot(smoothed, color='cornflowerblue', label='Smooth score curve')
+    plt.plot(score, alpha=0.3, color='cornflowerblue', label='True score curve')
+    plt.legend()
     plt.xlabel('episode')
     plt.ylabel('score')
+    plt.tight_layout()
     plt.show()
 
 
