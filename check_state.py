@@ -1,8 +1,5 @@
 """
 Code for checking ship states, return reward.
-
-Using:
-numpy: 1.21.5
 """
 from functions import *
 from make_env import MultiAgentEnv
@@ -40,33 +37,69 @@ class CheckState:
                 for ship_j in range(self.agents_num):
                     self.rules_table[ship_i, ship_j] = 'Null'
 
-    def check_term(self, state, next_state, done_term):
+    # def check_term(self, state, next_state):
+    #     """
+    #     Function for checking relative distance to destination
+    #     :param state:
+    #     :param next_state:
+    #     :return: reward_term and done_term states
+    #     """
+    #     reward_term = np.zeros(self.agents_num)
+    #     for ship_idx in range(self.agents_num):
+    #         dis_to_goal = euc_dist(next_state[ship_idx, 0], self.pos_term[ship_idx, 0],
+    #                                next_state[ship_idx, 1], self.pos_term[ship_idx, 1])
+    #         dis_last = euc_dist(state[ship_idx, 0], self.pos_term[ship_idx, 0],
+    #                             state[ship_idx, 1], self.pos_term[ship_idx, 1])
+    #         # reward_term[ship_idx] = dis_last - dis_to_goal
+    #         if dis_last > dis_to_goal:
+    #             reward_term[ship_idx] = dis_last - dis_to_goal
+    #         else:
+    #             reward_term[ship_idx] = dis_last - dis_to_goal - 5
+    #     return reward_term
+
+    def check_term(self, next_state):
         """
-        Function for checking destination
-        :param state:
+        Function for checking relative angle to destination
         :param next_state:
-        :param done_term: flag of done state
-        :return: reward_term and done_term states
-                 reward_term: reward according to terminal states
+        :return: reward_term: reward according to heading angele
         """
         reward_term = np.zeros(self.agents_num)
         for ship_idx in range(self.agents_num):
+            ang_to_term = true_bearing(next_state[ship_idx, 0], next_state[ship_idx, 1],
+                                       self.pos_term[ship_idx, 0], self.pos_term[ship_idx, 1])
+            dif_ang = abs(next_state[ship_idx, 2] - ang_to_term)
+            if dif_ang > 360:
+                dif_ang -= 360
+
+            if dif_ang < 5:
+                reward_term[ship_idx] = 20
+            elif 5 <= dif_ang < 90:
+                reward_term[ship_idx] = 0
+            else:
+                reward_term[ship_idx] = -20
+        return reward_term
+
+    def check_done(self, next_state, done_term):
+        """
+        Function for checking goal states
+        :param next_state:
+        :param done_term: flag of done state
+        :return: reward_done: reward according to done states
+        """
+        reward_done = np.zeros(self.agents_num)
+        for ship_idx in range(self.agents_num):
+            dis_to_goal = euc_dist(next_state[ship_idx, 0], self.pos_term[ship_idx, 0],
+                                   next_state[ship_idx, 1], self.pos_term[ship_idx, 1])
             if not done_term[ship_idx]:
-                dis_to_goal = euc_dist(next_state[ship_idx, 0], self.pos_term[ship_idx, 0],
-                                       next_state[ship_idx, 1], self.pos_term[ship_idx, 1])
                 if dis_to_goal < self.dis_r:
                     done_term[ship_idx] = True
-                    reward_term[ship_idx] = 100
+                    # reward for reaching goal
+                    reward_done[ship_idx] = 100
                 else:
                     done_term[ship_idx] = False
-                    dis_last = euc_dist(state[ship_idx, 0], self.pos_term[ship_idx, 0],
-                                        state[ship_idx, 1], self.pos_term[ship_idx, 1])
-                    reward_term[ship_idx] = dis_last - dis_to_goal
-                    # if dis_last > dis_to_goal:
-                    #     reward_term[ship_idx] = dis_last - dis_to_goal
-                    # else:
-                    #     reward_term[ship_idx] = dis_last - dis_to_goal - 10
-        return reward_term, done_term
+                    # punishment for living
+                    reward_done[ship_idx] = -1
+        return reward_done, done_term
 
     def check_coll(self, state, next_state):
         """
@@ -138,10 +171,25 @@ if __name__ == '__main__':
     # obs_ = ships.step(actions)
     dis_r = 10
     dis_s = 15
-    check_env = CheckState(ships.ships_num, ships.ships_pos, ships.ships_term, ships.ships_head, ships.ships_speed,
-                           dis_r, dis_s)
+    # check_env = CheckState(ships.ships_num, ships.ships_pos, ships.ships_term, ships.ships_head, ships.ships_speed,
+    #                        dis_r, dis_s)
 
     # done_term = [False] * ships.ships_num
     # reward_term, done_term = check_env.check_term(obs, obs_, done_term)
     # reward_coll, done_coll = check_env.check_coll(obs, obs_)
-    print(check_env.rules_table)
+    # print(check_env.rules_table)
+
+    # ships = MultiAgentEnv('1Ship')
+    obs = ships.ships_pos
+    actions = [10, 0]
+    obs_ = ships.step(actions)
+    # dis_r = 10
+    # dis_s = 15
+    done = [False] * ships.ships_num
+    check_env = CheckState(ships.ships_num, ships.ships_pos, ships.ships_term, ships.ships_head, ships.ships_speed,
+                           dis_r, dis_s)
+    print(obs_)
+    reward_term = check_env.check_term(obs_)
+    reward_done, done = check_env.check_done(obs_, done)
+    print(reward_term)
+    print(reward_done)
