@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 class OUNoise:
-    def __init__(self, action_dimension, mu=0, theta=0.15, sigma=0.2):
+    def __init__(self, action_dimension, mu=0, theta=0.15, sigma=0.05):
         """
         Create Ornstein-Uhlenbeck noise
         :param action_dimension: number of actions
