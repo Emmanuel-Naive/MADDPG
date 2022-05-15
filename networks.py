@@ -9,12 +9,20 @@ The same situation happens in the actor part.
 
 Using:
 pytroch: 1.10.2
+os: Built-in package of Python
+Python: 3.9
 """
 import os
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+
+
+def init_weights(layer):
+    if type(layer) == nn.Linear:
+        nn.init.uniform_(layer.weight, a=-0.001, b=0.001)
+        nn.init.constant_(layer.bias, 0.1)
 
 
 class CriticNetwork(nn.Module):
@@ -33,12 +41,13 @@ class CriticNetwork(nn.Module):
 
         self.chkpt_file = os.path.join(chkpt_dir, name)
         # network structure
-        self.fc1 = nn.Linear(input_dims+n_agents*n_actions, fc1_dims)
+        self.fc1 = nn.Linear(input_dims + n_agents * n_actions, fc1_dims)
         self.fc2 = nn.Linear(fc1_dims, fc2_dims)
         self.q = nn.Linear(fc2_dims, 1)
         # optimization method
         self.optimizer = optim.Adam(self.parameters(), lr=beta)
         # if possible, use GPU to train
+        self.apply(init_weights)
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
         self.to(self.device)
 
@@ -82,8 +91,9 @@ class ActorNetwork(nn.Module):
         self.pi = nn.Linear(fc2_dims, n_actions)
 
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+        self.apply(init_weights)
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
- 
+
         self.to(self.device)
 
     def forward(self, state):
@@ -91,8 +101,8 @@ class ActorNetwork(nn.Module):
         :param state:
         :return: result of the network
         """
-        x = F.relu(self.fc1(state))
-        x = F.relu(self.fc2(x))
+        x = F.leaky_relu(self.fc1(state))
+        x = F.leaky_relu(self.fc2(x))
         # x = F.relu(self.fc2(state))
         # output range (-1,1)
         # pi = nn.Tanh()(self.pi(x))
