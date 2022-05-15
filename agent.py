@@ -6,6 +6,7 @@ Only learning rates are given by two different variables (alpha and beta).
 
 Using:
 pytroch: 1.10.2
+numpy: 1.21.5
 """
 import numpy as np
 import torch as T
@@ -44,7 +45,7 @@ class Agent:
                                            chkpt_dir=chkpt_dir, name=self.agent_name+'_target_critic')
 
         self.update_network_parameters(tau=1)
-        self.exploration_noise = OUNoise(self.n_actions)
+        self.exploration_noise = OUNoise(self.n_actions,  mu=0, theta=0.15, sigma=0.05)
 
     def reset_noise(self):
         """
