@@ -108,19 +108,20 @@ if __name__ == '__main__':
                 state_ = obs_.reshape(1, -1)
 
                 # reward
-                reward_term = check_env.check_term(obs_)
-                reward_term_max = 20
-
-                # reward_coll, done_coll = check_env.check_coll(obs, obs_)
-
-                # reward_CORLEG = check_env.check_CORLEGs(obs, obs_)
-
                 reward_done, done_goal = check_env.check_done(obs_, done_goal)
 
-                reward = reward_term
-                reward_max = reward_term_max
-                # reward = reward_term + reward_coll + reward_CORLEG - reward_alive
-                # print(reward, reward_term, reward_coll, reward_CORLEG)
+                reward_term = check_env.check_term(obs_)
+                reward_term_max = 20
+                if env.ships_num > 1:
+                    reward_coll, done_coll = check_env.check_coll(obs, obs_)
+                    reward_coll_max = 20
+                    reward_CORLEG = check_env.check_CORLEGs(obs, obs_)
+                    reward_CORLEG_max = 20
+                    reward = reward_term + reward_coll + reward_CORLEG - reward_alive
+                    reward_max = reward_term_max + reward_coll_max + reward_CORLEG_max + reward_done
+                else:
+                    reward = reward_term + reward_done
+                    reward_max = reward_term_max
                 rewards_local.append(reward)
 
                 if step_episode >= steps_max:
@@ -130,8 +131,9 @@ if __name__ == '__main__':
                 #     print(i, state, done_goal)
                 if any(done_goal):
                     done_reset = True
-                # if done_coll:
-                #     done_reset = True
+                if env.ships_num > 1:
+                    if done_coll:
+                        done_reset = True
 
                 # data normalization
                 n_reward = reward.copy()
