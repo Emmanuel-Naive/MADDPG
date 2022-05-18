@@ -1,7 +1,7 @@
 # MADDPG
 Use Multi Agents Deep Deterministic Policy Gradient(MADDPG) Algorithm to Find Collision-free Paths for Ships
-Project stopped updating, new project about MATD3 is here: https://github.com/Emmanuel-Naive/MATD3
-
+Project stopped updating, new project about MATD3 is here: https://github.com/Emmanuel-Naive/MATD3  
+![image](https://github.com/Emmanuel-Naive/MADDPG/tree/main/SavedResult）  
 ## Known dependencies: 
   Python: 3.9  
   CUDA: 11.2  
